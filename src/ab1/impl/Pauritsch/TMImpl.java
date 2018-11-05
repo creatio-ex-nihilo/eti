@@ -7,6 +7,13 @@ import java.util.Set;
 
 public class TMImpl implements TM {
 
+    public final int HALTSTATE = 0;
+    public final char BLANK = '#';
+
+    private Set<Integer> states;
+    private Set<Character> symbols;
+    private Set<Transition> transitions;
+
     @Override
     public TM reset() {
         // TODO Auto-generated method stub
@@ -27,8 +34,11 @@ public class TMImpl implements TM {
 
     @Override
     public TM setSymbols(Set<Character> symbols) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        if (!this.symbols.contains(BLANK)) {
+            throw new IllegalArgumentException("doesn't contain " + BLANK);
+        }
+        this.symbols = symbols;
+        return this;
     }
 
     @Override

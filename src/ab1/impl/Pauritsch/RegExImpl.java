@@ -6,50 +6,42 @@ public class RegExImpl implements RegEx {
 
     @Override
     public String getRegex1() {
-        // TODO Auto-generated method stub
-        return null;
+        return ".*(a+b+).*";
     }
 
     @Override
     public String getRegex2() {
-        // TODO Auto-generated method stub
-        return null;
+        return ".*(abc|def)+.*";
     }
 
     @Override
     public String getRegex3() {
-        // TODO Auto-generated method stub
-        return null;
+        return ".*(abc)+.*(abc)+.*(abc)+.*";
     }
 
     @Override
     public String getRegexURL() {
-        // TODO Auto-generated method stub
-        return null;
+        return "(http|https|ftp)(://)[a-z^äÄöÖüÜß]+(\\.[a-z^äÄöÖüÜß]+)*\\.[a-z^äÄöÖüÜß]{2,3}(:(\\d){0,5})?(/[a-zA-Z0-9\\.\\-/]*)?";
     }
 
     @Override
     public String multiMatch1() {
-        // TODO Auto-generated method stub
-        return null;
+        return ".*foo.*";
     }
 
     @Override
     public String multiMatch2() {
-        // TODO Auto-generated method stub
-        return null;
+        return "ick$";
     }
 
     @Override
     public String multiMatch3() {
-        // TODO Auto-generated method stub
-        return null;
+        return "^(.*fu$)";
     }
 
     @Override
     public String multiMatch4() {
-        // TODO Auto-generated method stub
-        return null;
+        return "";
     }
 
 }
