@@ -2,39 +2,58 @@ package ab1.impl.Pauritsch;
 
 import ab1.TM;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TMImpl implements TM {
 
-    public final int HALTSTATE = 0;
-    public final char BLANK = '#';
+    static final char BLANK = '#';
 
     private Set<Integer> states;
     private Set<Character> symbols;
     private Set<Transition> transitions;
+    private Tape[] tapes;
+
+    private int initialState;
+    private int currentState;
+    private int haltState;
+
+    private boolean isCrashed;
+
+    private void init() {
+        this.states = new HashSet<>();
+        this.symbols = new HashSet<>();
+        this.transitions = new HashSet<>();
+    }
 
     @Override
     public TM reset() {
-        // TODO Auto-generated method stub
-        return null;
+        this.init();
+        return this;
     }
 
     @Override
     public int getActState() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.currentState;
     }
 
     @Override
     public TM setNumberOfTapes(int numTapes) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        if (numTapes < 1) {
+            throw new IllegalArgumentException("there has to be at least 1 tape");
+        }
+        this.tapes = new Tape[numTapes];
+        for (int i = 0; i < numTapes; i++) {
+            this.tapes[i] = new Tape();
+        }
+        return this;
     }
 
     @Override
     public TM setSymbols(Set<Character> symbols) throws IllegalArgumentException {
-        if (!this.symbols.contains(BLANK)) {
+        if (!symbols.contains(BLANK)) {
             throw new IllegalArgumentException("doesn't contain " + BLANK);
         }
         this.symbols = symbols;
@@ -43,8 +62,7 @@ public class TMImpl implements TM {
 
     @Override
     public Set<Character> getSymbols() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.symbols;
     }
 
     @Override
@@ -56,38 +74,50 @@ public class TMImpl implements TM {
 
     @Override
     public int getNumberOfStates() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.states.size();
     }
 
     @Override
     public int getNumberOfTapes() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.tapes.length;
     }
 
     @Override
     public TM setNumberOfStates(int numStates) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        if (numStates < 1) {
+            throw new IllegalArgumentException("there has to be at least 1 state");
+        }
+        for (int i = 0; i < numStates; i++) {
+            this.states.add(i);
+        }
+        return this;
     }
 
     @Override
     public TM setHaltState(int state) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        if (!this.states.contains(state)) {
+            throw new IllegalArgumentException("halt state has to be a known state");
+        }
+        this.haltState = state;
+        return this;
     }
 
     @Override
     public TM setInitialState(int state) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        if (!this.states.contains(state)) {
+            throw new IllegalArgumentException("initial state has to be a known state");
+        }
+        this.initialState = state;
+        return this;
     }
 
     @Override
     public TM setInitialTapeContent(int tape, char[] content) {
-        // TODO Auto-generated method stub
-        return null;
+        if (tape < 0 || tape >= this.tapes.length) {
+            // ok then ...
+        }
+        this.tapes[tape].setTapeContent(content);
+        return this;
     }
 
     @Override
@@ -98,26 +128,33 @@ public class TMImpl implements TM {
 
     @Override
     public boolean isHalt() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.currentState == this.haltState;
     }
 
     @Override
     public boolean isCrashed() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.isCrashed;
     }
 
     @Override
     public List<TMConfig> getTMConfig() {
-        // TODO Auto-generated method stub
-        return null;
+        if (this.isCrashed) {
+            return null;
+        }
+        ArrayList<TMConfig> output = new ArrayList<>();
+        for (Tape t : this.tapes) {
+            output.add(new TMConfig(t.getLeftOfHead(), t.getBelowHead(), t.getRightOfHead()));
+        }
+        return output;
     }
 
     @Override
     public TMConfig getTMConfig(int tape) {
-        // TODO Auto-generated method stub
-        return null;
+        if (this.isCrashed) {
+            return null;
+        }
+        Tape tmp = this.tapes[tape];
+        return new TMConfig(tmp.getLeftOfHead(), tmp.getBelowHead(), tmp.getRightOfHead());
     }
 
 }
