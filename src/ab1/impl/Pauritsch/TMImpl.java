@@ -22,6 +22,10 @@ public class TMImpl implements TM {
 
     private boolean isCrashed;
 
+    public TMImpl() {
+        this.init();
+    }
+
     private void init() {
         this.states = new HashSet<>();
         this.symbols = new HashSet<>();
@@ -87,6 +91,7 @@ public class TMImpl implements TM {
         if (numStates < 1) {
             throw new IllegalArgumentException("there has to be at least 1 state");
         }
+        this.states.clear();
         for (int i = 0; i < numStates; i++) {
             this.states.add(i);
         }

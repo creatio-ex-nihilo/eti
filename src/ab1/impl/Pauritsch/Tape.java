@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 public class Tape {
 
+    // would be better to use a dynamic collection like ArrayList or Vector,
+    // but I'm too lazy to rewrite it now.
     private char[] tapeContent;
     private int headPosition;
 
@@ -12,10 +14,19 @@ public class Tape {
     }
 
     public void setHeadPosition(int headPosition) throws IllegalArgumentException {
-        if (headPosition < 0 || headPosition >= this.tapeContent.length) {
+        if (headPosition < 0) {
             throw new IllegalArgumentException("head must be on tape");
+        } else if (headPosition >= this.tapeContent.length) {
+            // resize array
+            char[] tmp = Arrays.copyOf(this.tapeContent, headPosition + 1);
+            Arrays.fill(tmp, this.tapeContent.length, headPosition + 1, '#');
+            this.tapeContent = tmp;
         }
         this.headPosition = headPosition;
+    }
+
+    public void writeHead(char c) {
+        this.tapeContent[this.headPosition] = c;
     }
 
     public char[] getTapeContent() {
