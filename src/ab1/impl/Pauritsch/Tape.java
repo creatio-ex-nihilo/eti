@@ -19,7 +19,7 @@ public class Tape {
         } else if (headPosition >= this.tapeContent.length) {
             // resize array
             char[] tmp = Arrays.copyOf(this.tapeContent, headPosition + 1);
-            Arrays.fill(tmp, this.tapeContent.length, headPosition + 1, '#');
+            Arrays.fill(tmp, this.tapeContent.length, headPosition + 1, TMImpl.BLANK);
             this.tapeContent = tmp;
         }
         this.headPosition = headPosition;
