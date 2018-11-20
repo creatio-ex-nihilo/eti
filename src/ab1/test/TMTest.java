@@ -12,7 +12,7 @@ import java.util.HashSet;
 
 public class TMTest {
 
-    public TM getMachineOneTape() {
+    TM getMachineOneTape() {
         TM tm = new TMImpl()
                 .setNumberOfTapes(1)
                 .setNumberOfStates(4)
@@ -29,7 +29,7 @@ public class TMTest {
         return tm;
     }
 
-    public TM getMachineTwoTapes() {
+    TM getMachineTwoTapes() {
         int h = 0;
         int z1 = 1;
         int z2 = 2;
@@ -113,6 +113,8 @@ public class TMTest {
 
         // Maschine hat 1 Band
         Assert.assertEquals(1, tm.getNumberOfTapes());
+
+        System.out.println("test");
 
         // Lasse die Maschine bis zum Haltezustand laufen
         while (!tm.isHalt()) {

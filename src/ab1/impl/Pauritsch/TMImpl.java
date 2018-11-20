@@ -2,10 +2,7 @@ package ab1.impl.Pauritsch;
 
 import ab1.TM;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TMImpl implements TM {
 
@@ -16,7 +13,6 @@ public class TMImpl implements TM {
     private Set<Transition> transitions;
     private Tape[] tapes;
 
-    private int initialState;
     private int currentState;
     private int haltState;
 
@@ -72,8 +68,34 @@ public class TMImpl implements TM {
     @Override
     public TM addTransition(int fromState, int tapeRead, char symbolRead, int toState, int tapeWrite, char symbolWrite,
                             Movement tapeReadMovement, Movement tapeWriteMovement) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+
+        Transition tmp = new Transition(fromState, toState, symbolRead, symbolWrite, tapeRead, tapeWrite, tapeReadMovement, tapeWriteMovement);
+
+        if (fromState == this.haltState && symbolRead != '\u0000') {
+            throw new IllegalArgumentException("can't be in halt and read a symbol");
+        }
+        if (transitions.contains(tmp)) {
+            throw new IllegalArgumentException("transition already exists");
+        }
+        if (!this.symbols.contains(symbolRead) || !this.symbols.contains(symbolWrite)) {
+            throw new IllegalArgumentException("can't write unknown symbol");
+        }
+        if (tapeRead < 0 || tapeRead >= this.tapes.length || tapeWrite < 0 || tapeWrite >= this.tapes.length) {
+            throw new IllegalArgumentException("read or write tape doesn't exist");
+        }
+        if (!this.states.contains(fromState) || !this.states.contains(toState)) {
+            this.isCrashed = true;
+            throw new IllegalArgumentException("from or to state is unknown");
+        }
+
+        // if you have made it so far, add it.
+        this.transitions.add(tmp);
+        // TODO: add states?
+        /*
+        this.states.add(fromState);
+        this.states.add(toState);
+        */
+        return this;
     }
 
     @Override
@@ -112,7 +134,7 @@ public class TMImpl implements TM {
         if (!this.states.contains(state)) {
             throw new IllegalArgumentException("initial state has to be a known state");
         }
-        this.initialState = state;
+        this.currentState = state;
         return this;
     }
 
@@ -127,8 +149,57 @@ public class TMImpl implements TM {
 
     @Override
     public TM doNextStep() throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+        if (this.isHalt()) {
+            throw new IllegalStateException("already in halt");
+        }
+
+        Iterator iter = this.transitions.iterator();
+        boolean foundOne = false;
+        Transition tmp;
+
+        do {
+            tmp = (Transition) iter.next();
+            // transition with fromState and read tape with read symbol
+            if (tmp.getFromState() == this.currentState && tmp.getSymbolRead() == this.tapes[tmp.getTapeRead()].getBelowHead()) {
+                foundOne = true;
+                // change state
+                this.currentState = tmp.getToState();
+                // overwrite head on the write tape
+                this.tapes[tmp.getTapeWrite()].writeHead(tmp.getSymbolWrite());
+            }
+        } while (iter.hasNext() && !foundOne);
+
+        if (foundOne) {
+            // TODO: what to do if read and write are the same (so there is not a copy)?
+            Tape[] tapes = {this.tapes[tmp.getTapeRead()], this.tapes[tmp.getTapeWrite()]};
+            Movement[] moves = {tmp.getTapeReadMovement(), tmp.getTapeWriteMovement()};
+            for (int i = 0; i < tapes.length; i++) {
+                Tape t = tapes[i];
+                int head = t.getHeadPosition();
+                Movement m = moves[i];
+
+                // left
+                if (m.equals(Movement.Left)) {
+                    try {
+                        t.setHeadPosition(head - 1);
+                    } catch (IllegalArgumentException e) {
+                        this.isCrashed = true;
+                        throw new IllegalStateException("reached left end of tape");
+                    }
+                }
+                // right
+                else if (m.equals(Movement.Right)) {
+                    t.setHeadPosition(head + 1);
+                }
+                // stay
+                else if (m.equals(Movement.Stay)) {
+                    // TODO: do nothing?
+                }
+            }
+        } else {
+            throw new IllegalStateException("no matching transition found");
+        }
+        return this;
     }
 
     @Override

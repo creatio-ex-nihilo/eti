@@ -9,11 +9,11 @@ public class Tape {
     private char[] tapeContent;
     private int headPosition;
 
-    public int getHeadPosition() {
+    int getHeadPosition() {
         return this.headPosition;
     }
 
-    public void setHeadPosition(int headPosition) throws IllegalArgumentException {
+    void setHeadPosition(int headPosition) throws IllegalArgumentException {
         if (headPosition < 0) {
             throw new IllegalArgumentException("head must be on tape");
         } else if (headPosition >= this.tapeContent.length) {
@@ -25,7 +25,7 @@ public class Tape {
         this.headPosition = headPosition;
     }
 
-    public void writeHead(char c) {
+    void writeHead(char c) {
         this.tapeContent[this.headPosition] = c;
     }
 
@@ -38,6 +38,8 @@ public class Tape {
             throw new IllegalArgumentException("tape content has to be something");
         }
         this.tapeContent = tc;
+        // TODO: set head to right most position?
+        this.headPosition = this.tapeContent.length - 1;
     }
 
     char[] getLeftOfHead() {

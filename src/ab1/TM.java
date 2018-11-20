@@ -61,7 +61,6 @@ public interface TM {
      *
      * @param tapeRead          Band, von dem gelesen wird
      * @param tapeWrite         Band, auf das geschrieben wird
-     * @param tapeMove          Band, auf dem der Schreib/Lesekopf bewergt wird
      * @param fromState         Ausgangszustand
      * @param symbolRead        gelesenes Symbol
      * @param toState           Folgezustand
