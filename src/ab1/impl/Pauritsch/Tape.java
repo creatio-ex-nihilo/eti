@@ -2,7 +2,7 @@ package ab1.impl.Pauritsch;
 
 import java.util.Arrays;
 
-public class Tape {
+class Tape {
 
     // would be better to use a dynamic collection like ArrayList or Vector,
     // but I'm too lazy to rewrite it now.
@@ -27,10 +27,6 @@ public class Tape {
 
     void writeHead(char c) {
         this.tapeContent[this.headPosition] = c;
-    }
-
-    public char[] getTapeContent() {
-        return this.tapeContent;
     }
 
     void setTapeContent(char[] tc) throws IllegalArgumentException {

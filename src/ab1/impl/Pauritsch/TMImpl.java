@@ -71,7 +71,7 @@ public class TMImpl implements TM {
 
         Transition tmp = new Transition(fromState, toState, symbolRead, symbolWrite, tapeRead, tapeWrite, tapeReadMovement, tapeWriteMovement);
 
-        if (fromState == this.haltState && symbolRead != '\u0000') {
+        if (fromState == this.haltState && symbolRead != Character.MIN_VALUE) {
             throw new IllegalArgumentException("can't be in halt and read a symbol");
         }
         if (transitions.contains(tmp)) {
@@ -88,7 +88,7 @@ public class TMImpl implements TM {
             throw new IllegalArgumentException("from or to state is unknown");
         }
 
-        // if you have made it so far, add it.
+        // if you have made it this far, add it.
         this.transitions.add(tmp);
         return this;
     }
@@ -157,7 +157,7 @@ public class TMImpl implements TM {
 
         do {
             tmp = (Transition) iter.next();
-            // transition with fromState and read tape with read symbol
+            // find transition with fromState and read tape with read symbol
             if (tmp.getFromState() == this.currentState && tmp.getSymbolRead() == this.tapes[tmp.getTapeRead()].getBelowHead()) {
                 foundOne = true;
                 // change state
@@ -231,5 +231,4 @@ public class TMImpl implements TM {
         Tape tmp = this.tapes[tape];
         return new TMConfig(tmp.getLeftOfHead(), tmp.getBelowHead(), tmp.getRightOfHead());
     }
-
 }

@@ -114,8 +114,6 @@ public class TMTest {
         // Maschine hat 1 Band
         Assert.assertEquals(1, tm.getNumberOfTapes());
 
-        System.out.println("test");
-
         // Lasse die Maschine bis zum Haltezustand laufen
         while (!tm.isHalt()) {
             tm.doNextStep();
