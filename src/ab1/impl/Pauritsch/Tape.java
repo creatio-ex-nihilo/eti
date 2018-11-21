@@ -38,8 +38,6 @@ public class Tape {
             throw new IllegalArgumentException("tape content has to be something");
         }
         this.tapeContent = tc;
-        // TODO: set head to right most position?
-        this.headPosition = this.tapeContent.length - 1;
     }
 
     char[] getLeftOfHead() {

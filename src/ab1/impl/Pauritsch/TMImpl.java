@@ -90,11 +90,6 @@ public class TMImpl implements TM {
 
         // if you have made it so far, add it.
         this.transitions.add(tmp);
-        // TODO: add states?
-        /*
-        this.states.add(fromState);
-        this.states.add(toState);
-        */
         return this;
     }
 
@@ -140,10 +135,13 @@ public class TMImpl implements TM {
 
     @Override
     public TM setInitialTapeContent(int tape, char[] content) {
+        /*
         if (tape < 0 || tape >= this.tapes.length) {
             // ok then ...
         }
+        */
         this.tapes[tape].setTapeContent(content);
+        this.tapes[tape].setHeadPosition(content.length);
         return this;
     }
 
@@ -170,7 +168,6 @@ public class TMImpl implements TM {
         } while (iter.hasNext() && !foundOne);
 
         if (foundOne) {
-            // TODO: what to do if read and write are the same (so there is not a copy)?
             Tape[] tapes = {this.tapes[tmp.getTapeRead()], this.tapes[tmp.getTapeWrite()]};
             Movement[] moves = {tmp.getTapeReadMovement(), tmp.getTapeWriteMovement()};
             for (int i = 0; i < tapes.length; i++) {
@@ -192,9 +189,11 @@ public class TMImpl implements TM {
                     t.setHeadPosition(head + 1);
                 }
                 // stay
+                /*
                 else if (m.equals(Movement.Stay)) {
-                    // TODO: do nothing?
+                    // do nothing
                 }
+                */
             }
         } else {
             throw new IllegalStateException("no matching transition found");
