@@ -41,7 +41,7 @@ public class RegExImpl implements RegEx {
 
     @Override
     public String multiMatch4() {
-        return "";
+        return "(?!\\???|\\\\w\\+\\+|\\\\w\\*\\*|a\\(\\{1\\}\\|\\{3\\}\\|\\{9\\}\\))(\\\\w\\+|\\\\w\\*|a{1}|a{3}|a{9}|\\\\?\\?\\?|\\-|\\(\\\\001\\)\\\\1|\\(\\\\2\\)\\\\1)";
     }
 
 }
