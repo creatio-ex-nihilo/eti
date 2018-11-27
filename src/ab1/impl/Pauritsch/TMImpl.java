@@ -168,37 +168,41 @@ public class TMImpl implements TM {
         } while (iter.hasNext() && !foundOne);
 
         if (foundOne) {
-            Tape[] tapes = {this.tapes[tmp.getTapeRead()], this.tapes[tmp.getTapeWrite()]};
-            Movement[] moves = {tmp.getTapeReadMovement(), tmp.getTapeWriteMovement()};
-            for (int i = 0; i < tapes.length; i++) {
-                Tape t = tapes[i];
-                int head = t.getHeadPosition();
-                Movement m = moves[i];
-
-                // left
-                if (m.equals(Movement.Left)) {
-                    try {
-                        t.setHeadPosition(head - 1);
-                    } catch (IllegalArgumentException e) {
-                        this.isCrashed = true;
-                        throw new IllegalStateException("reached left end of tape");
-                    }
-                }
-                // right
-                else if (m.equals(Movement.Right)) {
-                    t.setHeadPosition(head + 1);
-                }
-                // stay
-                /*
-                else if (m.equals(Movement.Stay)) {
-                    // do nothing
-                }
-                */
-            }
+            this.moveHead(tmp);
         } else {
             throw new IllegalStateException("no matching transition found");
         }
         return this;
+    }
+
+    private void moveHead(Transition tmp) throws IllegalStateException {
+        Tape[] tapes = {this.tapes[tmp.getTapeRead()], this.tapes[tmp.getTapeWrite()]};
+        Movement[] moves = {tmp.getTapeReadMovement(), tmp.getTapeWriteMovement()};
+        for (int i = 0; i < tapes.length; i++) {
+            Tape t = tapes[i];
+            int head = t.getHeadPosition();
+            Movement m = moves[i];
+
+            // left
+            if (m.equals(Movement.Left)) {
+                try {
+                    t.setHeadPosition(head - 1);
+                } catch (IllegalArgumentException e) {
+                    this.isCrashed = true;
+                    throw new IllegalStateException("reached left end of tape");
+                }
+            }
+            // right
+            else if (m.equals(Movement.Right)) {
+                t.setHeadPosition(head + 1);
+            }
+            // stay
+            /*
+            else if (m.equals(Movement.Stay)) {
+                // do nothing
+            }
+            */
+        }
     }
 
     @Override
