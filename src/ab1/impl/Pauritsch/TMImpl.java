@@ -160,22 +160,23 @@ public class TMImpl implements TM {
             // find transition with fromState and read tape with read symbol
             if (tmp.getFromState() == this.currentState && tmp.getSymbolRead() == this.tapes[tmp.getTapeRead()].getBelowHead()) {
                 foundOne = true;
-                // change state
-                this.currentState = tmp.getToState();
-                // overwrite head on the write tape
-                this.tapes[tmp.getTapeWrite()].writeHead(tmp.getSymbolWrite());
             }
         } while (iter.hasNext() && !foundOne);
 
         if (foundOne) {
-            this.moveHead(tmp);
+            // change state
+            this.currentState = tmp.getToState();
+            // overwrite head on the write tape
+            this.tapes[tmp.getTapeWrite()].writeHead(tmp.getSymbolWrite());
+            // move heads according to the chosen transition
+            this.moveHeads(tmp);
         } else {
             throw new IllegalStateException("no matching transition found");
         }
         return this;
     }
 
-    private void moveHead(Transition tmp) throws IllegalStateException {
+    private void moveHeads(Transition tmp) throws IllegalStateException {
         Tape[] tapes = {this.tapes[tmp.getTapeRead()], this.tapes[tmp.getTapeWrite()]};
         Movement[] moves = {tmp.getTapeReadMovement(), tmp.getTapeWriteMovement()};
         for (int i = 0; i < tapes.length; i++) {
