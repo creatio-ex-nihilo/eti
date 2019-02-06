@@ -14,7 +14,7 @@ public interface PDA {
      * Setzt den Startzustand des Automaten
      *
      * @throws IllegalArgumentException falls numStates < 0 oder >= numStates
-     * @throws IllegalStateException    falls numStates noch nicht gesetzt wurde
+     * @throws IllegalStateException falls numStates noch nicht gesetzt wurde
      */
     void setInitialState(int initialState) throws IllegalArgumentException, IllegalStateException;
 
@@ -22,7 +22,7 @@ public interface PDA {
      * Setzt die akzeptierenden Zustände
      *
      * @throws IllegalArgumentException falls ein Zustand < 0 oder >= numStates ist
-     * @throws IllegalStateException    falls numStates noch nicht gesetzt wurde
+     * @throws IllegalStateException falls numStates noch nicht gesetzt wurde
      */
     void setAcceptingState(Set<Integer> acceptingStates) throws IllegalArgumentException, IllegalStateException;
 
@@ -40,7 +40,7 @@ public interface PDA {
      * Fügt eine Transiation hinzu
      *
      * @throws IllegalArgumentException falls ein Zustand nicht valide ist, die Zeichen nicht erlaubt sind
-     * @throws IllegalStateException    falls numStates, inputChars oder stackChars nicht gesetzt wurden
+     * @throws IllegalStateException falls numStates, inputChars oder stackChars nicht gesetzt wurden
      */
     void addTransition(int fromState, Character charReadTape, Character charReadStack, Character charWriteStack,
                        int toState) throws IllegalArgumentException, IllegalStateException;
@@ -50,7 +50,7 @@ public interface PDA {
      * PDA ist)
      *
      * @throws IllegalArgumentException der Input aus nicht erlaubten Zeichen besteht
-     * @throws IllegalStateException    falls numStates, inputChars oder stackChars nicht gesetzt wurden
+     * @throws IllegalStateException falls numStates, inputChars oder stackChars nicht gesetzt wurden
      */
     boolean accepts(String input) throws IllegalArgumentException, IllegalStateException;
 
@@ -61,7 +61,7 @@ public interface PDA {
      * darf verändert werden. es muss ein neuer PDA erzeugt werden.
      *
      * @throws IllegalArgumentException falls numStates, inputChars oder stackChars des übergebenen PDA nicht gesetzt wurden
-     * @throws IllegalStateException    falls numStates, inputChars oder stackChars nicht gesetzt wurden
+     * @throws IllegalStateException falls numStates, inputChars oder stackChars nicht gesetzt wurden
      */
     PDA append(PDA pda) throws IllegalArgumentException, IllegalStateException;
 
@@ -72,7 +72,7 @@ public interface PDA {
      * verändert werden. es muss ein neuer PDA erzeugt werden.
      *
      * @throws IllegalArgumentException falls numStates, inputChars oder stackChars des übergebenen PDA nicht gesetzt wurden
-     * @throws IllegalStateException    falls numStates, inputChars oder stackChars nicht gesetzt wurden
+     * @throws IllegalStateException falls numStates, inputChars oder stackChars nicht gesetzt wurden
      */
     PDA union(PDA pda) throws IllegalArgumentException, IllegalStateException;
 

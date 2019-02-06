@@ -10,7 +10,7 @@ public class FactoryImpl implements Factory {
 
     @Override
     public Mealy getEmptyMealy() {
-        return null;
+        return new MealyImpl();
     }
 
     @Override
