@@ -49,9 +49,6 @@ public class MealyImpl implements Mealy {
         if (!isDeterministic(fromState, charRead, charWrite)) {
             throw new IllegalArgumentException("transition would create a nondeterminism");
         }
-        if (this.readChars.isEmpty() || this.writeChars.isEmpty() || this.states.isEmpty()) {
-            throw new IllegalStateException("further setup required");
-        }
 
         Transition t = new Transition(fromState, toState, charRead, charWrite);
         // just for safety reasons
@@ -81,14 +78,10 @@ public class MealyImpl implements Mealy {
         if (this.readChars == null || this.writeChars == null || this.transitions == null || this.states == null) {
             throw new IllegalStateException("further setup required");
         }
-
-        char[] inputArray = input.toCharArray();
-        StringBuilder output = new StringBuilder();
-
         // offset
         int tmpState = initialState;
-
-        for (char tmpChar : inputArray) {
+        StringBuilder output = new StringBuilder();
+        for (char tmpChar : input.toCharArray()) {
             Transition t = findTransition(tmpState, tmpChar);
             if (t == null) {
                 return null;
@@ -99,12 +92,7 @@ public class MealyImpl implements Mealy {
                 tmpState = t.getToState();
             }
         }
-
-        if (output.length() == 0) {
-            return "";
-        } else {
-            return output.toString();
-        }
+        return output.toString();
     }
 
     @Override
@@ -112,7 +100,6 @@ public class MealyImpl implements Mealy {
         if (this.readChars == null || this.writeChars == null || this.transitions == null || this.states == null) {
             throw new IllegalStateException("further setup required");
         }
-
         // copy mealy
         MealyImpl m = new MealyImpl();
         m.setNumStates(this.getNumStates());
@@ -126,13 +113,12 @@ public class MealyImpl implements Mealy {
         for (Transition t : this.transitions) {
             m.addTransition(t.getFromState(), t.getCharRead(), t.getCharWrite(), t.getToState());
         }
-
+        // create sets and states for RSA (minimization)
         Set<Integer> finalStates = new HashSet<>();
         finalStates.addAll(m.getStates());
         // additional state to complete DFA to RSA
         m.getStates().add(finalStates.size());
         int additionalState = m.getStates().size() - 1;
-
         // get all possible permutations
         Set<String> perms = this.allPermutations(m.getReadChars(), m.getWriteChars());
 
@@ -165,7 +151,6 @@ public class MealyImpl implements Mealy {
             superSet.clear();
             superSet.addAll(min);
             superSet.addAll(diagonal);
-
             // go through all entries in min
             for (String s : min) {
                 Object[] tmp = this.extractPair(s);
@@ -287,7 +272,6 @@ public class MealyImpl implements Mealy {
                     subPerms.add(createPair(t.getCharRead(), t.getCharWrite()));
                 }
             }
-
             // go through all saved perms; add transitions if necessary
             for (String p : perms) {
                 if (!subPerms.contains(p)) {
@@ -316,9 +300,8 @@ public class MealyImpl implements Mealy {
                 }
             }
             m.getTransitions().removeAll(delTransitions);
-            // you have to go through the transitions again for the case,
-            // that you want to delete a transition, but also have to
-            // alter it.
+            // you have to go through the transitions again for the special case,
+            // that you want to delete a transition, but also have to alter it.
             for (Transition t : m.getTransitions()) {
                 if (t.getToState() == state2) {
                     t.setToState(state1);
@@ -326,12 +309,6 @@ public class MealyImpl implements Mealy {
             }
             m.getStates().remove(state2);
         }
-
-        /*
-        for(Transition t : this.transitions){
-            System.out.println(t);
-        }
-        */
     }
 
     private boolean containsSetCommutativeElement(Set<String> set, String element) {
