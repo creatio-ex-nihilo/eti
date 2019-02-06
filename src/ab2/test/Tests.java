@@ -974,6 +974,9 @@ public class Tests {
         pdaPoints += 1;
     }
 
+    /************************************************************************/
+    /******************************* CFG->PDF *******************************/
+
     @Test
     public void testPDAAppend4() {
         PDA pda1 = pda3();
@@ -993,5 +996,59 @@ public class Tests {
         assertFalse(pda.accepts("abba"));
 
         pdaPoints += 1;
+    }
+
+    /************************************************************************/
+
+    @Test
+    public void testCFGToPDA1() {
+        String cfg = "S→aSa|bSb|cSc|a|b|c";
+        Set<String> set = new HashSet<>();
+        set.add(cfg);
+
+        PDA pda = factory.getPDAFromCFG('S', set);
+
+        assertTrue(pda.accepts("a"));
+        assertTrue(pda.accepts("aaa"));
+        assertTrue(pda.accepts("aba"));
+        assertTrue(pda.accepts("abcba"));
+        assertTrue(pda.accepts("aabcbaa"));
+
+        assertFalse(pda.accepts(""));
+        assertFalse(pda.accepts("aa"));
+        assertFalse(pda.accepts("ababcb"));
+        assertFalse(pda.accepts("abba"));
+        assertFalse(pda.accepts("aabac"));
+
+        pdaPoints += 2;
+    }
+
+    @Test
+    public void testCFGToPDA2() {
+        String cfg1 = "S→aS|bS|T";
+        String cfg2 = "T→cT|c";
+        Set<String> set = new HashSet<>();
+        set.add(cfg1);
+        set.add(cfg2);
+
+        PDA pda = factory.getPDAFromCFG('S', set);
+
+        assertTrue(pda.accepts("c"));
+        assertTrue(pda.accepts("ac"));
+        assertTrue(pda.accepts("abc"));
+        assertTrue(pda.accepts("bac"));
+        assertTrue(pda.accepts("babaac"));
+        assertTrue(pda.accepts("cccc"));
+        assertTrue(pda.accepts("acccc"));
+        assertTrue(pda.accepts("babcccc"));
+
+        assertFalse(pda.accepts(""));
+        assertFalse(pda.accepts("aa"));
+        assertFalse(pda.accepts("caa"));
+        assertFalse(pda.accepts("bab"));
+        assertFalse(pda.accepts("babaa"));
+        assertFalse(pda.accepts("cabac"));
+
+        pdaPoints += 2;
     }
 }
