@@ -5,6 +5,7 @@ import ab2.Transition;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Vector;
 
 public class MealyImpl implements Mealy {
 
@@ -40,7 +41,7 @@ public class MealyImpl implements Mealy {
             }
         }
         if (this.readChars == null) {
-            throw new IllegalStateException("no read alphabet set");
+            throw new IllegalStateException("no write alphabet set");
         } else {
             if (!this.readChars.contains(charRead)) {
                 throw new IllegalArgumentException("charRead or charWrite isn't a valid symbol");
@@ -68,9 +69,140 @@ public class MealyImpl implements Mealy {
             throw new IllegalStateException("no write alphabet set");
         }
         if (this.readChars == null) {
-            throw new IllegalStateException("no read alphabet set");
+            throw new IllegalStateException("no write alphabet set");
         }
-        return null;
+        // go through the whole transition table
+        // and check for each state, if it has different outputs
+        // if so, it needs to be splitted
+        // if not, it already is moore-compatible
+        MealyImpl m = this.copyMealy();
+        Set<Transition> replacements = this.findSplittableStates(m);
+        this.newTransitions(m, replacements);
+
+        // delete old states
+        for (Transition r : replacements) {
+            m.getStates().remove(r.getFromState());
+        }
+
+        // rename states and states in transitions to
+        // be compatible with the junit tests
+        Vector<Integer> newStates = new Vector<>();
+        int cnt = 0;
+        for (int s : m.getStates()) {
+            newStates.add(cnt++);
+        }
+
+        Object[] oldS = m.getStates().toArray();
+        Object[] newS = newStates.toArray();
+
+        for (int index = 0; index < m.getStates().size(); index++) {
+            int o = (int) oldS[index];
+            int n = (int) newS[index];
+            for (Transition t : m.getTransitions()) {
+                if (t.getFromState() == o) {
+                    t.setFromState(n);
+                }
+                if (t.getToState() == o) {
+                    t.setToState(n);
+                }
+            }
+        }
+
+        return m;
+    }
+
+    private Set<Transition> findSplittableStates(MealyImpl m) {
+        Set<Integer> splittableStates = new HashSet<>();
+        // get the actually used chars (needed later)
+        Set<Character> actuallyReadChars = new HashSet<>();
+        Set<Character> actuallyWrittenChars = new HashSet<>();
+        boolean acquired = false;
+        for (int s : m.getStates()) {
+            Set<Character> writes = new HashSet<>();
+            for (Transition t : m.getTransitions()) {
+                if (!acquired) {
+                    actuallyReadChars.add(t.getCharRead());
+                    actuallyWrittenChars.add(t.getCharWrite());
+                }
+                if (t.getToState() == s) {
+                    writes.add(t.getCharWrite());
+                }
+            }
+            if (writes.size() > 1) {
+                // this state needs to be splitted
+                splittableStates.add(s);
+            }
+            acquired = true;
+        }
+
+        Object[] wC = actuallyWrittenChars.toArray();
+
+        Set<Transition> replacements = new HashSet<>();
+        for (int s : splittableStates) {
+            // find all transitions from state s
+            Vector<Integer> newStates = new Vector<>();
+            int offset = m.getNumStates();
+            int cnt = 0;
+            // split for all written chars
+            for (int i = 0; i < wC.length; i++) {
+                Character c = (Character) wC[i];
+                int newstate = offset + cnt++;
+                newStates.add(newstate);
+                for (Transition t : m.getTransitions()) {
+                    if (t.getFromState() == s && t.getCharWrite() == c) {
+                        // create new transitions
+                        // toState is the newState !!!
+                        // ignore charRead!!!
+                        replacements.add(new Transition(s, newstate, t.getCharRead(), t.getCharWrite()));
+                    }
+                }
+            }
+            m.getStates().addAll(newStates);
+        }
+
+        return replacements;
+    }
+
+    private void newTransitions(MealyImpl m, Set<Transition> replacements) {
+        // copy of all transitions
+        Set<Transition> copyTrans = new HashSet<>();
+        copyTrans.addAll(m.getTransitions());
+
+        for (Transition r : replacements) {
+            for (Transition t : m.getTransitions()) {
+                // update all transitions with the new splitted states
+                if (t.getToState() == r.getFromState() && t.getCharWrite() == r.getCharWrite()) {
+                    t.setToState(r.getToState());
+                }
+            }
+        }
+
+        Set<Transition> toBeDeleted = new HashSet<>();
+        // create new transitions
+        for (Transition t : m.getTransitions()) {
+            for (Transition r : replacements) {
+                if (t.getFromState() == r.getFromState()) {
+                    Transition tmp = new Transition(r.getToState(), t.getToState(), t.getCharRead(), t.getCharWrite());
+                    copyTrans.add(tmp);
+                    toBeDeleted.add(t);
+                }
+            }
+        }
+
+        Set<Transition> finished = new HashSet<>();
+        finished.addAll(copyTrans);
+
+        // delete doesn't work for some reason
+        for (Transition d : toBeDeleted) {
+            for (Transition t : copyTrans) {
+                if (d.equals(t)) {
+                    finished.remove(d);
+                }
+            }
+        }
+
+        m.getTransitions().clear();
+        m.getTransitions().addAll(finished);
     }
 
     @Override
@@ -101,18 +233,7 @@ public class MealyImpl implements Mealy {
             throw new IllegalStateException("further setup required");
         }
         // copy mealy
-        MealyImpl m = new MealyImpl();
-        m.setNumStates(this.getNumStates());
-        m.setInitialState(this.getInitialState());
-        Set<Character> rC = new HashSet<>();
-        rC.addAll(this.getReadChars());
-        m.setReadChars(rC);
-        Set<Character> rW = new HashSet<>();
-        rW.addAll(this.getWriteChars());
-        m.setWriteChars(rW);
-        for (Transition t : this.transitions) {
-            m.addTransition(t.getFromState(), t.getCharRead(), t.getCharWrite(), t.getToState());
-        }
+        MealyImpl m = this.copyMealy();
         // create sets and states for RSA (minimization)
         Set<Integer> finalStates = new HashSet<>();
         finalStates.addAll(m.getStates());
@@ -134,6 +255,23 @@ public class MealyImpl implements Mealy {
         }
         m.getTransitions().removeAll(delTransitions);
         m.getStates().remove(additionalState);
+        return m;
+    }
+
+    private MealyImpl copyMealy() {
+        // copy mealy
+        MealyImpl m = new MealyImpl();
+        m.setNumStates(this.getNumStates());
+        m.setInitialState(this.getInitialState());
+        Set<Character> rC = new HashSet<>();
+        rC.addAll(this.getReadChars());
+        m.setReadChars(rC);
+        Set<Character> rW = new HashSet<>();
+        rW.addAll(this.getWriteChars());
+        m.setWriteChars(rW);
+        for (Transition t : this.transitions) {
+            m.addTransition(t.getFromState(), t.getCharRead(), t.getCharWrite(), t.getToState());
+        }
         return m;
     }
 
@@ -265,7 +403,7 @@ public class MealyImpl implements Mealy {
 
     private void createRSA(MealyImpl m, Set<String> perms, int additionalState) {
         for (int s : m.getStates()) {
-            // get all transitions from state s to x; save all read/write-pairs
+            // get all transitions from state s to x; save all write/write-pairs
             Set<String> subPerms = new HashSet<>();
             for (Transition t : m.getTransitions()) {
                 if (t.getFromState() == s) {
@@ -275,7 +413,7 @@ public class MealyImpl implements Mealy {
             // go through all saved perms; add transitions if necessary
             for (String p : perms) {
                 if (!subPerms.contains(p)) {
-                    // split perm into read & write
+                    // split perm into write & write
                     Object[] tmp = extractPair(p);
                     String tmpRead = (String) tmp[0];
                     String tmpWrite = (String) tmp[1];
