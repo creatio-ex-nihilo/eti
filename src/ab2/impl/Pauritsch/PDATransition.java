@@ -8,8 +8,8 @@ public class PDATransition {
     private Character writeStack;
     private int toState;
 
-    public PDATransition(int fromState, Character charReadTape, Character charReadStack, Character charWriteStack,
-                         int toState) {
+    PDATransition(int fromState, Character charReadTape, Character charReadStack, Character charWriteStack,
+                  int toState) {
         this.fromState = fromState;
         this.readTape = charReadTape;
         this.readStack = charReadStack;
@@ -17,51 +17,32 @@ public class PDATransition {
         this.toState = toState;
     }
 
-    public int getFromState() {
+    int getFromState() {
         return fromState;
     }
 
-    public void setFromState(int fromState) {
-        this.fromState = fromState;
-    }
-
-    public Character getReadTape() {
+    Character getReadTape() {
         return readTape;
     }
 
-    public void setReadTape(Character readTape) {
-        this.readTape = readTape;
-    }
-
-    public Character getReadStack() {
+    Character getReadStack() {
         return readStack;
     }
 
-    public void setReadStack(Character readStack) {
-        this.readStack = readStack;
-    }
-
-    public Character getWriteStack() {
+    Character getWriteStack() {
         return writeStack;
     }
 
-    public void setWriteStack(Character writeStack) {
-        this.writeStack = writeStack;
-    }
-
-    public int getToState() {
+    int getToState() {
         return toState;
-    }
-
-    public void setToState(int toState) {
-        this.toState = toState;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + readTape;
+        result = prime * result + (readTape == null ? 0 : readTape.hashCode());
+        result = prime * result + (readStack == null ? 0 : readStack.hashCode());
         result = prime * result + (writeStack == null ? 0 : writeStack.hashCode());
         result = prime * result + fromState;
         result = prime * result + toState;

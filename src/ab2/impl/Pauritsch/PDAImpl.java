@@ -99,8 +99,11 @@ public class PDAImpl implements PDA {
         if (this.allowedInputChars == null) {
             throw new IllegalStateException("no read alphabet set");
         } else {
-            if (!this.allowedInputChars.contains(charReadTape)) {
-                throw new IllegalArgumentException("charReadTape isn't a valid symbol");
+            // you don't have to read something from the stack
+            if (charReadTape != null) {
+                if (!this.allowedInputChars.contains(charReadTape)) {
+                    throw new IllegalArgumentException("charReadTape isn't a valid symbol");
+                }
             }
         }
         PDATransition t = new PDATransition(fromState, charReadTape, charReadStack, charWriteStack, toState);
@@ -110,6 +113,7 @@ public class PDAImpl implements PDA {
         } else {
             this.transitions.add(t);
         }
+        this.transitions.add(t);
     }
 
     @Override
@@ -132,7 +136,6 @@ public class PDAImpl implements PDA {
         this.currentState = this.initState;
 
         // offset
-        int cnt = 0;
         Set<PDAContainer> all = new HashSet<>();
         PDAContainer tmp = new PDAContainer(this.currentState, null, this.stack);
         all.add(tmp);
@@ -161,7 +164,7 @@ public class PDAImpl implements PDA {
         return false;
     }
 
-    private Set<PDAContainer> stuff(char c, PDAContainer container) throws IllegalArgumentException {
+    private Set<PDAContainer> stuff(Character c, PDAContainer container) throws IllegalArgumentException {
         // find all transitions from currentState with charReadTape c
         Set<PDATransition> transitions = this.findTransitions(container.getCurrentState(), c, container.getStack());
         if (transitions == null) {
@@ -183,7 +186,49 @@ public class PDAImpl implements PDA {
 
     @Override
     public PDA append(PDA pda) throws IllegalArgumentException, IllegalStateException {
-        return null;
+        // give pda a type
+        PDAImpl given = (PDAImpl) pda;
+        // create copy
+        PDAImpl copy = new PDAImpl();
+        int offset = this.states.size();
+        copy.setNumStates(offset + given.states.size());
+        copy.setInitialState(this.initState);
+        copy.setAcceptingState(this.acceptStates);
+        // create superset of allowed chars
+        Set<Character> superInput = new HashSet<>();
+        superInput.addAll(this.allowedInputChars);
+        superInput.addAll(given.allowedInputChars);
+        copy.setInputChars(superInput);
+        // create superset of allowed chars
+        Set<Character> superStack = new HashSet<>();
+        superStack.addAll(this.allowedStackChars);
+        superStack.addAll(given.allowedStackChars);
+        copy.setStackChars(superStack);
+
+        // copy existing transitions to copy
+        for (PDATransition t : this.transitions) {
+            copy.addTransition(t.getFromState(), t.getReadTape(), t.getReadStack(), t.getWriteStack(), t.getToState());
+        }
+
+        // copy given and modified transitions to copy
+        for (PDATransition t : given.transitions) {
+            copy.addTransition(offset + t.getFromState(), t.getReadTape(), t.getReadStack(), t.getWriteStack(), offset + t.getToState());
+        }
+
+        // add epsilon-transition from all accepting states
+        // to initial state of given PDA
+        for (int s : copy.acceptStates) {
+            copy.addTransition(s, null, null, null, offset + given.initState);
+        }
+
+        // change accepting states to those
+        // of given
+        Set<Integer> acceptingStates = new HashSet<>();
+        for (int s : given.acceptStates) {
+            acceptingStates.add(offset + s);
+        }
+        copy.setAcceptingState(acceptingStates);
+        return copy;
     }
 
     @Override
@@ -205,7 +250,7 @@ public class PDAImpl implements PDA {
         return true;
     }
 
-    private Set<PDATransition> findTransitions(int fromState, char charReadTape, Stack<Character> stack) {
+    private Set<PDATransition> findTransitions(int fromState, Character charReadTape, Stack<Character> stack) {
         Set<PDATransition> out = new HashSet<>();
         Character topOfStack = this.getTopOfStack(stack);
         Character s;
@@ -216,7 +261,7 @@ public class PDAImpl implements PDA {
                 // ignore the top of the stack
                 s = null;
             }
-            if (t.getFromState() == fromState && t.getReadTape().equals(charReadTape) && t.getReadStack() == s) {
+            if (t.getFromState() == fromState && t.getReadTape() == charReadTape && t.getReadStack() == s) {
                 out.add(t);
             }
         }
