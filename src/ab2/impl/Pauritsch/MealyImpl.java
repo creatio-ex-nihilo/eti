@@ -41,10 +41,10 @@ public class MealyImpl implements Mealy {
             }
         }
         if (this.readChars == null) {
-            throw new IllegalStateException("no write alphabet set");
+            throw new IllegalStateException("no read alphabet set");
         } else {
             if (!this.readChars.contains(charRead)) {
-                throw new IllegalArgumentException("charRead or charWrite isn't a valid symbol");
+                throw new IllegalArgumentException("charRead isn't a valid symbol");
             }
         }
         if (!isDeterministic(fromState, charRead, charWrite)) {

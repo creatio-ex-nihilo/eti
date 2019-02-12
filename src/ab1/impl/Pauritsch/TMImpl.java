@@ -6,7 +6,7 @@ import java.util.*;
 
 public class TMImpl implements TM {
 
-    static final char BLANK = '#';
+    public static final char BLANK = '#';
 
     private Set<Integer> states;
     private Set<Character> symbols;

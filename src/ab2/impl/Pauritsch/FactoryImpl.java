@@ -15,7 +15,7 @@ public class FactoryImpl implements Factory {
 
     @Override
     public PDA getEmptyPDA() {
-        return null;
+        return new PDAImpl();
     }
 
     @Override
