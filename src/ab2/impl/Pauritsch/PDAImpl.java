@@ -20,7 +20,7 @@ public class PDAImpl implements PDA {
     private Tape tape;
     private Stack<Character> stack;
 
-    public PDAImpl() {
+    PDAImpl() {
         this.transitions = new HashSet<>();
         this.tape = new Tape();
         this.stack = new Stack<>();
@@ -130,20 +130,55 @@ public class PDAImpl implements PDA {
         this.tape.setTapeContent(chars);
         this.tape.setHeadPosition(0);
         this.currentState = this.initState;
+
+        // offset
+        int cnt = 0;
+        Set<PDAContainer> all = new HashSet<>();
+        PDAContainer tmp = new PDAContainer(this.currentState, null, this.stack);
+        all.add(tmp);
+
+        Set<PDAContainer> tmpAll = new HashSet<>();
         char c;
         while ((c = this.tape.getBelowHead()) != TMImpl.BLANK) {
-            // find a transition from currentState with charReadTape c
-            PDATransition t = this.findTransition(this.currentState, c);
-            // no (further) transition is found
-            if (t == null) {
-                // if there is still something on the tape
-                // but there are no fitting transitions found
-                return false;
+            for (PDAContainer container : all) {
+                try {
+                    tmpAll.addAll(this.stuff(c, container));
+                } catch (IllegalArgumentException e) {
+                    //return false;
+                }
             }
-            this.doTransition(t);
+            all.clear();
+            all.addAll(tmpAll);
+            tmpAll.clear();
             this.tape.setHeadPosition(this.tape.getHeadPosition() + 1);
         }
-        return this.checkAcceptance();
+        // check each remaining container with the accepting set of criteria
+        for (PDAContainer container : all) {
+            if (this.checkAcceptance(container)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<PDAContainer> stuff(char c, PDAContainer container) throws IllegalArgumentException {
+        // find all transitions from currentState with charReadTape c
+        Set<PDATransition> transitions = this.findTransitions(container.getCurrentState(), c, container.getStack());
+        if (transitions == null) {
+            throw new IllegalArgumentException("can't find a fitting transition");
+        }
+        Set<PDAContainer> successfulTransitions = new HashSet<>();
+        for (PDATransition t : transitions) {
+            // create copy of current stack
+            Stack<Character> copy = new Stack<>();
+            copy.addAll(container.getStack());
+
+            PDAContainer ret = this.doTransition(new PDAContainer(container.getCurrentState(), t, copy));
+            if (ret != null) {
+                successfulTransitions.add(ret);
+            }
+        }
+        return successfulTransitions;
     }
 
     @Override
@@ -158,11 +193,21 @@ public class PDAImpl implements PDA {
 
     @Override
     public boolean isDPDA() throws IllegalStateException {
-        return false;
+        for (PDATransition t : this.transitions) {
+            for (PDATransition s : this.transitions) {
+                if (!t.equals(s)) {
+                    if (t.getFromState() == s.getFromState() && t.getReadTape() == s.getReadTape()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
-    private PDATransition findTransition(int fromState, char charReadTape) {
-        Character topOfStack = this.getTopOfStack();
+    private Set<PDATransition> findTransitions(int fromState, char charReadTape, Stack<Character> stack) {
+        Set<PDATransition> out = new HashSet<>();
+        Character topOfStack = this.getTopOfStack(stack);
         Character s;
         for (PDATransition t : this.transitions) {
             s = topOfStack;
@@ -172,42 +217,48 @@ public class PDAImpl implements PDA {
                 s = null;
             }
             if (t.getFromState() == fromState && t.getReadTape().equals(charReadTape) && t.getReadStack() == s) {
-                return t;
+                out.add(t);
             }
         }
-        return null;
+        return out.size() == 0 ? null : out;
     }
 
-    private void doTransition(PDATransition t) {
-        Character topOfStack = this.getTopOfStack();
+    private PDAContainer doTransition(PDAContainer c) {
+        PDATransition t = c.getTransition();
+        Stack<Character> s = c.getStack();
+        Character topOfStack = this.getTopOfStack(s);
         // pop of the stack
         if (t.getReadStack() != null) {
-            if (topOfStack == t.getReadStack()) {
+            // if you want to read something from the stack
+            // but the stack is empty, you can't do stuff
+            if (topOfStack == null) {
+                return null;
+            } else if (topOfStack == t.getReadStack()) {
                 // remove the top of the stack
-                this.stack.pop();
+                s.pop();
             }
         }
         // push onto stack
         if (t.getWriteStack() != null) {
-            this.stack.push(t.getWriteStack());
+            s.push(t.getWriteStack());
         }
         // change state
-        if (t.getFromState() == this.currentState) {
-            this.currentState = t.getToState();
+        if (t.getFromState() == c.getCurrentState()) {
+            c.setCurrentState(t.getToState());
         }
+        return c;
     }
 
-    private Character getTopOfStack() {
-        if (!this.stack.empty()) {
-            return this.stack.peek();
+    private Character getTopOfStack(Stack<Character> s) {
+        if (!s.empty()) {
+            return s.peek();
         }
         return null;
     }
 
-    private boolean checkAcceptance() {
-        boolean ret;
-        ret = this.acceptStates.contains(this.currentState) && this.stack.empty();
-        this.stack.clear();
+    private boolean checkAcceptance(PDAContainer c) {
+        boolean ret = this.acceptStates.contains(c.getCurrentState()) && c.getStack().empty();
+        c.getStack().clear();
         return ret;
     }
 }

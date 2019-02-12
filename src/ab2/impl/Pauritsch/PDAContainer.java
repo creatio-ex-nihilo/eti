@@ -1,31 +1,31 @@
 package ab2.impl.Pauritsch;
 
-import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 
-public class PDAContainer {
-    Set<PDATransition> transitions;
-    Vector<Stack> stacks;
+class PDAContainer {
+    private int currentState;
+    private PDATransition transition;
+    private Stack<Character> stack;
 
-    public PDAContainer(Set<PDATransition> transitions, Vector<Stack> stacks) {
-        this.transitions = transitions;
-        this.stacks = stacks;
+    PDAContainer(int currentState, PDATransition transition, Stack<Character> stack) {
+        this.currentState = currentState;
+        this.transition = transition;
+        this.stack = stack;
     }
 
-    public Set<PDATransition> getTransitions() {
-        return transitions;
+    int getCurrentState() {
+        return currentState;
     }
 
-    public void setTransitions(Set<PDATransition> transitions) {
-        this.transitions = transitions;
+    void setCurrentState(int currentState) {
+        this.currentState = currentState;
     }
 
-    public Vector<Stack> getStacks() {
-        return stacks;
+    PDATransition getTransition() {
+        return transition;
     }
 
-    public void setStacks(Vector<Stack> stacks) {
-        this.stacks = stacks;
+    Stack<Character> getStack() {
+        return stack;
     }
 }
