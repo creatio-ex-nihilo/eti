@@ -6,7 +6,7 @@ import java.util.*;
 
 public class TMImpl implements TM {
 
-    public static final char BLANK = '#';
+    public static final Character BLANK = '#';
 
     private Set<Integer> states;
     private Set<Character> symbols;
@@ -140,8 +140,13 @@ public class TMImpl implements TM {
             // ok then ...
         }
         */
-        this.tapes[tape].setTapeContent(content);
-        this.tapes[tape].setHeadPosition(content.length);
+        Character[] tmp = new Character[content.length];
+        int i = 0;
+        for (char c : content) {
+            tmp[i++] = c;
+        }
+        this.tapes[tape].setTapeContent(tmp);
+        this.tapes[tape].setHeadPosition(tmp.length);
         return this;
     }
 
@@ -223,7 +228,7 @@ public class TMImpl implements TM {
         }
         ArrayList<TMConfig> output = new ArrayList<>();
         for (Tape t : this.tapes) {
-            output.add(new TMConfig(t.getLeftOfHead(), t.getBelowHead(), t.getRightOfHead()));
+            output.add(this.generateConfig(t.getLeftOfHead(), t.getBelowHead(), t.getRightOfHead()));
         }
         return output;
     }
@@ -234,6 +239,21 @@ public class TMImpl implements TM {
             return null;
         }
         Tape tmp = this.tapes[tape];
-        return new TMConfig(tmp.getLeftOfHead(), tmp.getBelowHead(), tmp.getRightOfHead());
+        return this.generateConfig(tmp.getLeftOfHead(), tmp.getBelowHead(), tmp.getRightOfHead());
+    }
+
+    private TMConfig generateConfig(Character[] l, Character b, Character[] r) {
+        char[] lnew = new char[l.length];
+        int lindex = 0;
+        for (Character c : l) {
+            lnew[lindex++] = c;
+        }
+        char bnew = b;
+        char[] rnew = new char[r.length];
+        int rindex = 0;
+        for (Character c : r) {
+            rnew[rindex++] = c;
+        }
+        return new TMConfig(lnew, bnew, rnew);
     }
 }

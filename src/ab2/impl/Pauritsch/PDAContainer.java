@@ -28,4 +28,13 @@ class PDAContainer {
     Stack<Character> getStack() {
         return stack;
     }
+
+    @Override
+    public String toString() {
+        return "PDAContainer{" +
+                "currentState=" + currentState +
+                ", transition=" + transition +
+                ", stack=" + stack +
+                '}';
+    }
 }

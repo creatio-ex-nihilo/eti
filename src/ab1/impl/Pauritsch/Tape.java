@@ -6,7 +6,7 @@ public class Tape {
 
     // would be better to use a dynamic collection like ArrayList or Vector,
     // but I'm too lazy to rewrite it now.
-    private char[] tapeContent;
+    private Character[] tapeContent;
     private int headPosition;
 
     public int getHeadPosition() {
@@ -18,33 +18,33 @@ public class Tape {
             throw new IllegalArgumentException("head must be on tape");
         } else if (headPosition >= this.tapeContent.length) {
             // resize array
-            char[] tmp = Arrays.copyOf(this.tapeContent, headPosition + 1);
+            Character[] tmp = Arrays.copyOf(this.tapeContent, headPosition + 1);
             Arrays.fill(tmp, this.tapeContent.length, headPosition + 1, TMImpl.BLANK);
             this.tapeContent = tmp;
         }
         this.headPosition = headPosition;
     }
 
-    public void writeHead(char c) {
+    void writeHead(Character c) {
         this.tapeContent[this.headPosition] = c;
     }
 
-    public void setTapeContent(char[] tc) throws IllegalArgumentException {
+    public void setTapeContent(Character[] tc) throws IllegalArgumentException {
         if (tc.length <= 0) {
             throw new IllegalArgumentException("tape content has to be something");
         }
         this.tapeContent = tc;
     }
 
-    public char[] getLeftOfHead() {
+    Character[] getLeftOfHead() {
         return Arrays.copyOfRange(this.tapeContent, 0, this.headPosition);
     }
 
-    public char getBelowHead() {
+    public Character getBelowHead() {
         return this.tapeContent[this.headPosition];
     }
 
-    public char[] getRightOfHead() {
+    Character[] getRightOfHead() {
         return Arrays.copyOfRange(this.tapeContent, this.headPosition + 1, this.findLastNonBlankPosition());
     }
 

@@ -7,6 +7,7 @@ import ab2.PDA;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
+import java.util.Vector;
 
 public class PDAImpl implements PDA {
 
@@ -18,12 +19,10 @@ public class PDAImpl implements PDA {
     private Set<Character> allowedStackChars;
     private Set<PDATransition> transitions;
     private Tape tape;
-    private Stack<Character> stack;
 
     PDAImpl() {
         this.transitions = new HashSet<>();
         this.tape = new Tape();
-        this.stack = new Stack<>();
     }
 
     @Override
@@ -46,6 +45,7 @@ public class PDAImpl implements PDA {
             throw new IllegalArgumentException("can't set unknown state as initial state");
         }
         this.initState = initialState;
+        this.currentState = this.initState;
     }
 
     @Override
@@ -121,67 +121,43 @@ public class PDAImpl implements PDA {
         if (this.states == null || this.allowedStackChars == null || this.allowedInputChars == null) {
             throw new IllegalStateException("further setup is required");
         }
-        char[] chars = input.toCharArray();
-        for (char s : chars) {
-            if (!this.allowedInputChars.contains(s)) {
-                throw new IllegalArgumentException("input contains unknown char(s)");
+        char[] in = input.toCharArray();
+        for (char c : in) {
+            if (!this.allowedInputChars.contains(c)) {
+                throw new IllegalArgumentException("unknown symbol in input");
             }
         }
-        if (chars.length == 0) {
-            chars = new char[1];
-            chars[0] = TMImpl.BLANK;
-        }
-        this.tape.setTapeContent(chars);
+        this.tape.setTapeContent(this.getCharArray(in));
         this.tape.setHeadPosition(0);
-        this.currentState = this.initState;
 
-        // offset
-        Set<PDAContainer> all = new HashSet<>();
-        PDAContainer tmp = new PDAContainer(this.currentState, null, this.stack);
-        all.add(tmp);
+        // create the first transition to be checked
+        // which basically says "start from initState with an empty stack"
+        PDAContainer offset = new PDAContainer(this.currentState, null, new Stack<>());
+        Vector<Set<PDAContainer>> allTransitions = this.doAllPossibleTransitions(offset);
 
-        Set<PDAContainer> tmpAll = new HashSet<>();
-        char c;
-        while ((c = this.tape.getBelowHead()) != TMImpl.BLANK) {
-            for (PDAContainer container : all) {
-                try {
-                    tmpAll.addAll(this.stuff(c, container));
-                } catch (IllegalArgumentException e) {
-                    //return false;
+        Set<PDAContainer> relevantTransitions = allTransitions.lastElement();
+        if (allTransitions.size() == 1) {
+            if (relevantTransitions.size() == 0) {
+                // special case if no transition at all is found
+                return this.checkAcceptance(offset);
+            }
+            for (PDAContainer container : relevantTransitions) {
+                if (this.checkAcceptance(container)) {
+                    return true;
                 }
             }
-            all.clear();
-            all.addAll(tmpAll);
-            tmpAll.clear();
-            this.tape.setHeadPosition(this.tape.getHeadPosition() + 1);
-        }
-        // check each remaining container with the accepting set of criteria
-        for (PDAContainer container : all) {
-            if (this.checkAcceptance(container)) {
-                return true;
+            return false;
+        } else {
+            if (relevantTransitions.size() == 0) {
+                return false;
+            }
+            for (PDAContainer container : relevantTransitions) {
+                if (this.checkAcceptance(container)) {
+                    return true;
+                }
             }
         }
         return false;
-    }
-
-    private Set<PDAContainer> stuff(Character c, PDAContainer container) throws IllegalArgumentException {
-        // find all transitions from currentState with charReadTape c
-        Set<PDATransition> transitions = this.findTransitions(container.getCurrentState(), c, container.getStack());
-        if (transitions == null) {
-            throw new IllegalArgumentException("can't find a fitting transition");
-        }
-        Set<PDAContainer> successfulTransitions = new HashSet<>();
-        for (PDATransition t : transitions) {
-            // create copy of current stack
-            Stack<Character> copy = new Stack<>();
-            copy.addAll(container.getStack());
-
-            PDAContainer ret = this.doTransition(new PDAContainer(container.getCurrentState(), t, copy));
-            if (ret != null) {
-                successfulTransitions.add(ret);
-            }
-        }
-        return successfulTransitions;
     }
 
     @Override
@@ -233,17 +209,64 @@ public class PDAImpl implements PDA {
 
     @Override
     public PDA union(PDA pda) throws IllegalArgumentException, IllegalStateException {
-        return null;
+        // give pda a type
+        PDAImpl given = (PDAImpl) pda;
+        // create copy
+        PDAImpl copy = new PDAImpl();
+        // the states in PDA1 start with 1
+        // 0 is reserved for the new initial state
+        int offsetLeft = 1;
+        // the states in PDA2 start with all states in PDA1
+        // plus it's offset
+        int offsetRight = this.states.size() + offsetLeft;
+        copy.setNumStates(offsetRight + given.states.size());
+        copy.setInitialState(0);
+        // just to have a set set
+        copy.setAcceptingState(this.acceptStates);
+        // create superset of allowed chars
+        Set<Character> superInput = new HashSet<>();
+        superInput.addAll(this.allowedInputChars);
+        superInput.addAll(given.allowedInputChars);
+        copy.setInputChars(superInput);
+        // create superset of allowed chars
+        Set<Character> superStack = new HashSet<>();
+        superStack.addAll(this.allowedStackChars);
+        superStack.addAll(given.allowedStackChars);
+        copy.setStackChars(superStack);
+
+        // copy existing and modified transitions to copy
+        for (PDATransition t : this.transitions) {
+            copy.addTransition(t.getFromState() + offsetLeft, t.getReadTape(), t.getReadStack(), t.getWriteStack(), t.getToState() + offsetLeft);
+        }
+
+        // copy given and modified transitions to copy
+        for (PDATransition t : given.transitions) {
+            copy.addTransition(t.getFromState() + offsetRight, t.getReadTape(), t.getReadStack(), t.getWriteStack(), t.getToState() + offsetRight);
+        }
+
+        // add epsilon-transition from new initial state
+        // to the old initial states of PDA1 & PDA2
+        copy.addTransition(0, null, null, null, this.initState + offsetLeft);
+        copy.addTransition(0, null, null, null, given.initState + offsetRight);
+
+        // add accepting states together
+        Set<Integer> acceptingStates = new HashSet<>();
+        for (int s : this.acceptStates) {
+            acceptingStates.add(offsetLeft + s);
+        }
+        for (int s : given.acceptStates) {
+            acceptingStates.add(offsetRight + s);
+        }
+        copy.setAcceptingState(acceptingStates);
+        return copy;
     }
 
     @Override
     public boolean isDPDA() throws IllegalStateException {
         for (PDATransition t : this.transitions) {
             for (PDATransition s : this.transitions) {
-                if (!t.equals(s)) {
-                    if (t.getFromState() == s.getFromState() && t.getReadTape() == s.getReadTape()) {
-                        return false;
-                    }
+                if (!t.equals(s) && t.getFromState() == s.getFromState() && t.getReadTape() == s.getReadTape()) {
+                    return false;
                 }
             }
         }
@@ -275,7 +298,7 @@ public class PDAImpl implements PDA {
         // pop of the stack
         if (t.getReadStack() != null) {
             // if you want to read something from the stack
-            // but the stack is empty, you can't do stuff
+            // but the stack is empty, you can't do doDoableTransitions
             if (topOfStack == null) {
                 return null;
             } else if (topOfStack == t.getReadStack()) {
@@ -302,8 +325,96 @@ public class PDAImpl implements PDA {
     }
 
     private boolean checkAcceptance(PDAContainer c) {
-        boolean ret = this.acceptStates.contains(c.getCurrentState()) && c.getStack().empty();
-        c.getStack().clear();
-        return ret;
+        return this.acceptStates.contains(c.getCurrentState()) && c.getStack().empty();
+    }
+
+    private Character[] getCharArray(char[] in) {
+        Character[] chars;
+        // special case if input is empty
+        if (in.length == 0) {
+            chars = new Character[1];
+            chars[0] = null;
+        } else {
+            int i = 0;
+            chars = new Character[in.length];
+            for (char c : in) {
+                chars[i++] = c;
+            }
+        }
+        return chars;
+    }
+
+    private Set<PDAContainer> doDoableTransitions(Character c, PDAContainer container) throws IllegalArgumentException {
+        // find all transitions from currentState with charReadTape c
+        Set<PDATransition> transitions = this.findTransitions(container.getCurrentState(), c, container.getStack());
+        if (transitions == null) {
+            throw new IllegalArgumentException("can't find a fitting transition");
+        }
+        Set<PDAContainer> successfulTransitions = new HashSet<>();
+        for (PDATransition t : transitions) {
+            // create copy of current stack
+            Stack<Character> copy = new Stack<>();
+            copy.addAll(container.getStack());
+
+            PDAContainer ret = this.doTransition(new PDAContainer(container.getCurrentState(), t, copy));
+            if (ret != null) {
+                successfulTransitions.add(ret);
+            }
+        }
+        return successfulTransitions;
+    }
+
+    private Vector<Set<PDAContainer>> doAllPossibleTransitions(PDAContainer offset) {
+        // create a set of transitions, which have to be checked
+        Set<PDAContainer> toBeChecked = new HashSet<>();
+        // add the first created transition
+        toBeChecked.add(offset);
+        // create a set for all further transitions from transitions in toBeChecked
+        Set<PDAContainer> furtherTransitions = new HashSet<>();
+        // create a vector with all done transitions
+        Vector<Set<PDAContainer>> allTransitions = new Vector<>();
+
+        Character readFromTape;
+        while ((readFromTape = this.tape.getBelowHead()) != TMImpl.BLANK) {
+            // check if epsilon transitions are possible before checking the "normal" ones
+            this.epsilonTransitions(toBeChecked);
+            // check "normal" and further epsilon transitions
+            for (PDAContainer container : toBeChecked) {
+                try {
+                    furtherTransitions.addAll(this.doDoableTransitions(readFromTape, container));
+                    furtherTransitions.addAll(this.doDoableTransitions(null, container));
+                } catch (IllegalArgumentException e) {
+                    // do nothing
+                }
+            }
+            // check if epsilon transitions are possible after checking the "normal" ones
+            this.epsilonTransitions(furtherTransitions);
+
+            // create a copy of all further transitions
+            Set<PDAContainer> copy = new HashSet<>(furtherTransitions);
+            allTransitions.add(copy);
+
+            // replace toBeChecked with all further transitions
+            // because those need to be checked next
+            toBeChecked.clear();
+            toBeChecked.addAll(furtherTransitions);
+            furtherTransitions.clear();
+            this.tape.setHeadPosition(this.tape.getHeadPosition() + 1);
+        }
+        return allTransitions;
+    }
+
+    private void epsilonTransitions(Set<PDAContainer> in) {
+        Set<PDAContainer> out = new HashSet<>();
+        for (PDAContainer container : in) {
+            try {
+                out.addAll(this.doDoableTransitions(null, container));
+            } catch (IllegalArgumentException e) {
+                // do nothing
+            }
+        }
+        if (out.size() != 0) {
+            in.addAll(out);
+        }
     }
 }
