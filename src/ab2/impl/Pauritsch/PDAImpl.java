@@ -132,29 +132,17 @@ public class PDAImpl implements PDA {
 
         // create the first transition to be checked
         // which basically says "start from initState with an empty stack"
-        PDAContainer offset = new PDAContainer(this.currentState, null, new Stack<>());
+        PDAContainer offset = new PDAContainer(this.initState, null, new Stack<>());
         Vector<Set<PDAContainer>> allTransitions = this.doAllPossibleTransitions(offset);
 
         Set<PDAContainer> relevantTransitions = allTransitions.lastElement();
-        if (allTransitions.size() == 1) {
-            if (relevantTransitions.size() == 0) {
-                // special case if no transition at all is found
-                return this.checkAcceptance(offset);
-            }
-            for (PDAContainer container : relevantTransitions) {
-                if (this.checkAcceptance(container)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            if (relevantTransitions.size() == 0) {
-                return false;
-            }
-            for (PDAContainer container : relevantTransitions) {
-                if (this.checkAcceptance(container)) {
-                    return true;
-                }
+        if (relevantTransitions.size() == 0 && allTransitions.size() == 1) {
+            // special case if no transition at all is found
+            return this.checkAcceptance(offset);
+        }
+        for (PDAContainer container : relevantTransitions) {
+            if (this.checkAcceptance(container)) {
+                return true;
             }
         }
         return false;
@@ -171,13 +159,11 @@ public class PDAImpl implements PDA {
         copy.setInitialState(this.initState);
         copy.setAcceptingState(this.acceptStates);
         // create superset of allowed chars
-        Set<Character> superInput = new HashSet<>();
-        superInput.addAll(this.allowedInputChars);
+        Set<Character> superInput = new HashSet<>(this.allowedInputChars);
         superInput.addAll(given.allowedInputChars);
         copy.setInputChars(superInput);
         // create superset of allowed chars
-        Set<Character> superStack = new HashSet<>();
-        superStack.addAll(this.allowedStackChars);
+        Set<Character> superStack = new HashSet<>(this.allowedStackChars);
         superStack.addAll(given.allowedStackChars);
         copy.setStackChars(superStack);
 
@@ -224,13 +210,11 @@ public class PDAImpl implements PDA {
         // just to have a set set
         copy.setAcceptingState(this.acceptStates);
         // create superset of allowed chars
-        Set<Character> superInput = new HashSet<>();
-        superInput.addAll(this.allowedInputChars);
+        Set<Character> superInput = new HashSet<>(this.allowedInputChars);
         superInput.addAll(given.allowedInputChars);
         copy.setInputChars(superInput);
         // create superset of allowed chars
-        Set<Character> superStack = new HashSet<>();
-        superStack.addAll(this.allowedStackChars);
+        Set<Character> superStack = new HashSet<>(this.allowedStackChars);
         superStack.addAll(given.allowedStackChars);
         copy.setStackChars(superStack);
 
@@ -378,11 +362,10 @@ public class PDAImpl implements PDA {
         while ((readFromTape = this.tape.getBelowHead()) != TMImpl.BLANK) {
             // check if epsilon transitions are possible before checking the "normal" ones
             this.epsilonTransitions(toBeChecked);
-            // check "normal" and further epsilon transitions
+            // check "normal" transitions
             for (PDAContainer container : toBeChecked) {
                 try {
                     furtherTransitions.addAll(this.doDoableTransitions(readFromTape, container));
-                    furtherTransitions.addAll(this.doDoableTransitions(null, container));
                 } catch (IllegalArgumentException e) {
                     // do nothing
                 }
