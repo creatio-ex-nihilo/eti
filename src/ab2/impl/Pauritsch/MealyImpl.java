@@ -135,8 +135,6 @@ public class MealyImpl implements Mealy {
             acquired = true;
         }
 
-        Object[] wC = actuallyWrittenChars.toArray();
-
         Set<Transition> replacements = new HashSet<>();
         for (int s : splittableStates) {
             // find all transitions from state s
@@ -144,12 +142,11 @@ public class MealyImpl implements Mealy {
             int offset = m.getNumStates();
             int cnt = 0;
             // split for all written chars
-            for (int i = 0; i < wC.length; i++) {
-                Character c = (Character) wC[i];
+            for (Character c : actuallyWrittenChars) {
                 int newstate = offset + cnt++;
                 newStates.add(newstate);
                 for (Transition t : m.getTransitions()) {
-                    if (t.getFromState() == s && t.getCharWrite() == c) {
+                    if (t.getToState() == s && t.getCharWrite() == c) {
                         // create new transitions
                         // toState is the newState !!!
                         // ignore charRead!!!
@@ -165,8 +162,7 @@ public class MealyImpl implements Mealy {
 
     private void newTransitions(MealyImpl m, Set<Transition> replacements) {
         // copy of all transitions
-        Set<Transition> copyTrans = new HashSet<>();
-        copyTrans.addAll(m.getTransitions());
+        Set<Transition> copyTrans = new HashSet<>(m.getTransitions());
 
         for (Transition r : replacements) {
             for (Transition t : m.getTransitions()) {
@@ -189,8 +185,7 @@ public class MealyImpl implements Mealy {
             }
         }
 
-        Set<Transition> finished = new HashSet<>();
-        finished.addAll(copyTrans);
+        Set<Transition> finished = new HashSet<>(copyTrans);
 
         // delete doesn't work for some reason
         for (Transition d : toBeDeleted) {
@@ -235,11 +230,10 @@ public class MealyImpl implements Mealy {
         // copy mealy
         MealyImpl m = this.copyMealy();
         // create sets and states for RSA (minimization)
-        Set<Integer> finalStates = new HashSet<>();
-        finalStates.addAll(m.getStates());
+        Set<Integer> finalStates = new HashSet<>(m.getStates());
         // additional state to complete DFA to RSA
         m.getStates().add(finalStates.size());
-        int additionalState = m.getStates().size() - 1;
+        int additionalState = finalStates.size();
         // get all possible permutations
         Set<String> perms = this.allPermutations(m.getReadChars(), m.getWriteChars());
 
@@ -263,11 +257,9 @@ public class MealyImpl implements Mealy {
         MealyImpl m = new MealyImpl();
         m.setNumStates(this.getNumStates());
         m.setInitialState(this.getInitialState());
-        Set<Character> rC = new HashSet<>();
-        rC.addAll(this.getReadChars());
+        Set<Character> rC = new HashSet<>(this.getReadChars());
         m.setReadChars(rC);
-        Set<Character> rW = new HashSet<>();
-        rW.addAll(this.getWriteChars());
+        Set<Character> rW = new HashSet<>(this.getWriteChars());
         m.setWriteChars(rW);
         for (Transition t : this.transitions) {
             m.addTransition(t.getFromState(), t.getCharRead(), t.getCharWrite(), t.getToState());
@@ -281,8 +273,7 @@ public class MealyImpl implements Mealy {
         Set<String> superSet = new HashSet<>();
         // to be able to delete stuff from a set while you are operating on it
         // duplicate it
-        Set<String> tmpMin = new HashSet<>();
-        tmpMin.addAll(min);
+        Set<String> tmpMin = new HashSet<>(min);
 
         do {
             // (re)calc the superset
