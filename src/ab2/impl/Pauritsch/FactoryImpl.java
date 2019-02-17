@@ -20,6 +20,6 @@ public class FactoryImpl implements Factory {
 
     @Override
     public PDA getPDAFromCFG(char startSymbol, Set<String> rules) {
-        return null;
+        return new CFGImpl(startSymbol, rules).generatePDA();
     }
 }

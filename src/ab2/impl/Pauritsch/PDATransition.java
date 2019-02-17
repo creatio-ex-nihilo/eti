@@ -37,6 +37,10 @@ public class PDATransition {
         return toState;
     }
 
+    void setToState(int toState) {
+        this.toState = toState;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

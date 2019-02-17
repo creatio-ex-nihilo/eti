@@ -116,36 +116,20 @@ public class PDAImpl implements PDA {
         this.transitions.add(t);
     }
 
-    @Override
-    public boolean accepts(String input) throws IllegalArgumentException, IllegalStateException {
-        if (this.states == null || this.allowedStackChars == null || this.allowedInputChars == null) {
-            throw new IllegalStateException("further setup is required");
-        }
-        char[] in = input.toCharArray();
-        for (char c : in) {
-            if (!this.allowedInputChars.contains(c)) {
-                throw new IllegalArgumentException("unknown symbol in input");
+    static Character[] getCharArray(char[] in) {
+        Character[] chars;
+        // special case if input is empty
+        if (in.length == 0) {
+            chars = new Character[1];
+            chars[0] = null;
+        } else {
+            int i = 0;
+            chars = new Character[in.length];
+            for (char c : in) {
+                chars[i++] = c;
             }
         }
-        this.tape.setTapeContent(this.getCharArray(in));
-        this.tape.setHeadPosition(0);
-
-        // create the first transition to be checked
-        // which basically says "start from initState with an empty stack"
-        PDAContainer offset = new PDAContainer(this.initState, null, new Stack<>());
-        Vector<Set<PDAContainer>> allTransitions = this.doAllPossibleTransitions(offset);
-
-        Set<PDAContainer> relevantTransitions = allTransitions.lastElement();
-        if (relevantTransitions.size() == 0 && allTransitions.size() == 1) {
-            // special case if no transition at all is found
-            return this.checkAcceptance(offset);
-        }
-        for (PDAContainer container : relevantTransitions) {
-            if (this.checkAcceptance(container)) {
-                return true;
-            }
-        }
-        return false;
+        return chars;
     }
 
     @Override
@@ -312,20 +296,36 @@ public class PDAImpl implements PDA {
         return this.acceptStates.contains(c.getCurrentState()) && c.getStack().empty();
     }
 
-    private Character[] getCharArray(char[] in) {
-        Character[] chars;
-        // special case if input is empty
-        if (in.length == 0) {
-            chars = new Character[1];
-            chars[0] = null;
-        } else {
-            int i = 0;
-            chars = new Character[in.length];
-            for (char c : in) {
-                chars[i++] = c;
+    @Override
+    public boolean accepts(String input) throws IllegalArgumentException, IllegalStateException {
+        if (this.states == null || this.allowedStackChars == null || this.allowedInputChars == null) {
+            throw new IllegalStateException("further setup is required");
+        }
+        char[] in = input.toCharArray();
+        for (char c : in) {
+            if (!this.allowedInputChars.contains(c)) {
+                throw new IllegalArgumentException("unknown symbol in input");
             }
         }
-        return chars;
+        this.tape.setTapeContent(PDAImpl.getCharArray(in));
+        this.tape.setHeadPosition(0);
+
+        // create the first transition to be checked
+        // which basically says "start from initState with an empty stack"
+        PDAContainer offset = new PDAContainer(this.initState, null, new Stack<>());
+        Vector<Set<PDAContainer>> allTransitions = this.doAllPossibleTransitions(offset);
+
+        Set<PDAContainer> relevantTransitions = allTransitions.lastElement();
+        if (relevantTransitions.size() == 0 && allTransitions.size() == 1) {
+            // special case if no transition at all is found
+            return this.checkAcceptance(offset);
+        }
+        for (PDAContainer container : relevantTransitions) {
+            if (this.checkAcceptance(container)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Set<PDAContainer> doDoableTransitions(Character c, PDAContainer container) throws IllegalArgumentException {
@@ -361,6 +361,12 @@ public class PDAImpl implements PDA {
         Character readFromTape;
         while ((readFromTape = this.tape.getBelowHead()) != TMImpl.BLANK) {
             // check if epsilon transitions are possible before checking the "normal" ones
+            /* TODO: do the right amount of epsilon-transitions
+            for example "a"
+            0, null, null, S, 1
+            1, null, S, a, 1
+            1, a, a, null, 1
+            */
             this.epsilonTransitions(toBeChecked);
             // check "normal" transitions
             for (PDAContainer container : toBeChecked) {
